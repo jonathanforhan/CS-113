@@ -17,7 +17,7 @@ int main()
 	std::string expr;
 	std::getline(std::cin, expr);
 	
-	Calculator calculator(CalculatorOpts::eNil);
+	Calculator calculator;
 
 	int64_t result;
 	while (!(calculator.evaluate(expr, result)))
@@ -31,7 +31,7 @@ int main()
 
 void test()
 {
-	Calculator c(CalculatorOpts::eNil);
+	Calculator c;
 	int64_t r;
 	c.evaluate("2 ^ 8", r);
 	assert(r == 256);
@@ -58,4 +58,10 @@ void test()
 	assert(r == 6);
 
 	assert(c.evaluate("(1+3))", r) == false);
+
+	c.evaluate("2 * -2", r);
+	assert(r == -4);
+
+	c.evaluate("-2^(5%3)/[1+4-3]*-3", r);
+	assert(r == -6);
 }

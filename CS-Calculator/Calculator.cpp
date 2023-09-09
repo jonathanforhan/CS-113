@@ -4,7 +4,12 @@
 
 namespace calc {
 
-Calculator::Calculator(CalculatorOpts::Bits opts)
+Calculator::Calculator()
+	  : _opts(CalculatorOpts::eNil),
+    	_tokens({})
+{}
+
+Calculator::Calculator(unsigned opts)
 	  : _opts(opts),
     	_tokens({})
 {}
@@ -24,7 +29,7 @@ bool Calculator::evaluate(const std::string& expr, int64_t& result)
 	{
 		for (const auto &t : _tokens)
 		{
-			t & Token::MOD_BIT
+			t > Token::MOD_BIT
 				? std::cout << Parser::to_char(t) << ' '
 				: std::cout << t << ' ';
 		}
@@ -36,7 +41,7 @@ bool Calculator::evaluate(const std::string& expr, int64_t& result)
 
 	for (const auto token : _tokens)
 	{
-		if (!(token & Token::MOD_BIT))
+		if (!(token > Token::MOD_BIT))
 		{
 			stack.push_back(token);
 		}

@@ -13,7 +13,9 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 
 	std::vector<token_t> res_stack;	// result stack
 	std::vector<token_t> op_stack;	// operation stack
-	bool prev_numeric = false;		// if last val was a number
+	bool prev_numeric   = false;	// if last val was a number
+	bool prev_op		= false;	// if last val was an operation, used for negative determination
+	bool negative		= false;	// tracks negative vs minus sign
 	int last_precedence = 0;		// order of operations
 
 	for (const char c : expr)
@@ -24,16 +26,26 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 		if (isdigit(c))
 		{
 			if (prev_numeric)
+			{
 				res_stack.back() = res_stack.back() * 10 + static_cast<int64_t>(c - '0');
+			}
 			else
-				res_stack.push_back(static_cast<int64_t>(c - '0'));
+			{
+				auto n = static_cast<int64_t>(c - '0');
+				res_stack.push_back(negative ? (-1 * n) : n);
+			}
 			prev_numeric = true;
+			prev_op = negative = false;
 			continue;
 		}
-		else
+		else if (c == '-' && (prev_op || res_stack.empty()))
 		{
-			prev_numeric = false;
+			negative = true;
+			prev_numeric = prev_op = false;
+			continue;
 		}
+
+		prev_numeric = prev_op = negative = false;
 
 		token_t pair;
 
@@ -58,6 +70,7 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 		case Token::Exp:
 			// ^ is evaluated right-to-left so no precedence checking
 			op_stack.push_back(token);
+			prev_op = true;
 			break;
 		case Token::Mod:
 		case Token::Mul:
@@ -70,6 +83,7 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 				op_stack.pop_back();
 			}
 			op_stack.push_back(token);
+			prev_op = true;
 			break;
 		default:
 			throw std::runtime_error("Invalid Character as input: " + c);
@@ -197,7 +211,7 @@ void Parser::throw_if_invalid(const std::string& expr)
 	int bracket = 0, paren = 0, brace = 0;
 	for (const char c : expr)
 	{
-		if (c != ' ' && !isdigit(c))
+		if (c != ' ' && /* c != '.' && */ !isdigit(c))
 		{
 			token_t token;
 

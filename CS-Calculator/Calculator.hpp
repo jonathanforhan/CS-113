@@ -18,12 +18,13 @@ struct CalculatorOpts
 class Calculator
 {
 public:
-	explicit Calculator(CalculatorOpts::Bits opts);
+	explicit Calculator();
+	explicit Calculator(unsigned opts);
 
 	bool evaluate(const std::string& expr, int64_t& result);
 
 private:
-	CalculatorOpts::Bits _opts;
+	unsigned _opts;
 	std::vector<token_t> _tokens;
 };
 
