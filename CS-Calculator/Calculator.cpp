@@ -20,8 +20,9 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 		_tokens = Parser::try_parse(expr);
 	} catch (const std::exception& e) {
 		if (_opts & CalculatorOpts::eDebug)
+		{
 			std::cerr << e.what() << std::endl;
-
+		}
 		return false;
 	}
 
@@ -77,13 +78,11 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 		}
 	}
 
-	if (stack.empty())
+	if (stack.size() != 1)
 		return false;
 
-	result = stack.front();
-
 	constexpr double precision = 1000000.0;
-	result = std::round(result * precision) / precision;
+	result = std::round(stack.front() * precision) / precision;
 
 	return true;
 }

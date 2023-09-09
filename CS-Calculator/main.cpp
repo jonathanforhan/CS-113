@@ -2,6 +2,8 @@
 #include <cassert>
 #include "Calculator.hpp"
 
+using namespace calc;
+
 void test();
 
 int main()
@@ -15,7 +17,7 @@ int main()
 		"100 % 48 + 5 / .5"
 	};
 	
-	calc::Calculator calculator;
+	Calculator calculator;
 	std::string expr;
 	double result;
 	unsigned i = 0;
@@ -52,7 +54,7 @@ int main()
 
 void test()
 {
-	calc::Calculator c;
+	Calculator c;
 	double r;
 	bool b;
 
@@ -87,5 +89,8 @@ void test()
 	assert(!b);
 
 	b = c.evaluate("5 * 0.3-", r);
+	assert(!b);
+
+	b = c.evaluate(") 1 + 2 (", r);
 	assert(!b);
 }

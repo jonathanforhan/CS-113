@@ -18,7 +18,7 @@ namespace calc {
 
 struct CalculatorOpts
 {
-	enum Bits
+	enum
 	{
 		eNil		= 0,
 		ePrintRPN 	= 1,	// Print Reverse Polish Notation during parsing

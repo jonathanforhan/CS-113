@@ -29,19 +29,18 @@ std::vector<Token> Parser::try_parse(const std::string& expr)
 			if (prev_numeric)
 			{
 				assert(res_stack.back().numeric);
-				if (!floating_point)
-				{
-					res_stack.back().val = res_stack.back().val * 10 + static_cast<double>(c - '0');
-				}
-				else
-				{
-					// fix bug, adding to a negative doesn't produce larger answer
-					res_stack.back().val = res_stack.back().val >= 0
-						? res_stack.back().val + static_cast<double>(c - '0') / pow(10, floating_point)
-						: res_stack.back().val - static_cast<double>(c - '0') / pow(10, floating_point);
 
+				double curr_val = res_stack.back().val;
+
+				// digit matches sign of current value
+				double digit = curr_val >= 0 ? c - '0' : -(c - '0');
+
+				res_stack.back() = !floating_point
+					? curr_val * 10 + digit
+					: curr_val + digit / pow(10, floating_point);
+				
+				if (floating_point)
 					floating_point++;
-				}
 			}
 			else
 			{
@@ -70,12 +69,14 @@ std::vector<Token> Parser::try_parse(const std::string& expr)
 			floating_point++;
 			prev_numeric = true;
 			prev_op = false;
+
 			continue;
 		}
 		else if (c == '-' && (prev_op || res_stack.empty()))
 		{
 			negative = true;
 			prev_numeric = prev_op = false;
+
 			continue;
 		}
 
@@ -119,8 +120,6 @@ std::vector<Token> Parser::try_parse(const std::string& expr)
 			op_stack.push_back(op);
 			prev_op = true;
 			break;
-		default:
-			throw std::runtime_error("Invalid Character as input: " + c);
 		}
 
 		last_precedence = !op_stack.empty() ? get_precedence(op_stack.back()) : 0;
@@ -131,15 +130,16 @@ std::vector<Token> Parser::try_parse(const std::string& expr)
 		res_stack.emplace_back(*op);
 	}
 
-	int stack = 0;
+	int check = 0;
 	for (const auto &token : res_stack)
 	{
-		token.numeric ? stack++ : stack--;
+		token.numeric ? check++ : check--;
 	}
 
-	if (stack != 1)
+	if (check != 1)
 		throw std::runtime_error("Invalid combination of numbers and operations");
 
+	// RVO will take care of this, std::move not needed
 	return res_stack;
 }
 
@@ -169,32 +169,33 @@ void Parser::throw_if_invalid(const std::string& expr)
 	int bracket = 0, paren = 0, brace = 0;
 	for (const char c : expr)
 	{
-		if (c != ' ' && c != '.' && !isdigit(c))
+		if (c == ' ' || c == '.' || isdigit(c))
+			continue;
+
+		switch(Op::to_op(c) /* may throw */)
 		{
-			switch(Op::to_op(c) /* may throw */)
-			{
-				case Op::eLBracket:
-					bracket++;
-					break;
-				case Op::eLParen:
-					paren++;
-					break;
-				case Op::eLBrace:
-					brace++;
-					break;
-				case Op::eRBracket:
-					bracket--;
-					break;
-				case Op::eRParen:
-					paren--;
-					break;
-				case Op::eRBrace:
-					brace--;
-					break;
-				default:
-					break;
-			}
+			case Op::eLBracket:
+				bracket++;
+				break;
+			case Op::eLParen:
+				paren++;
+				break;
+			case Op::eLBrace:
+				brace++;
+				break;
+			case Op::eRBracket:
+				bracket--;
+				break;
+			case Op::eRParen:
+				paren--;
+				break;
+			case Op::eRBrace:
+				brace--;
+				break;
 		}
+
+		if (bracket < 0 || paren < 0 || brace < 0)
+			break;
 	}
 
 	if ((bracket | paren | brace) != 0)
