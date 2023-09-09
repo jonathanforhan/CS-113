@@ -12,10 +12,10 @@ public:
 
 	/* Make a token list from using the shunting yard algorithm */
 	/* https://en.wikipedia.org/wiki/Shunting_yard_algorithm */
-	static std::vector<token_t> try_parse(const std::string &expr);
+	static std::vector<Token> try_parse(const std::string &expr);
 
-	static token_t to_token(char c);
-	static char to_char(token_t t);
+	static op_t to_op(char c);
+	static char to_char(op_t t);
 
 private:
 	/* Logic for order of operations PEMDAS
@@ -26,7 +26,7 @@ private:
 	 * | + | 1 |
 	 * | - | 1 |
 	 */
-	static int get_precedence(token_t token);
+	static int get_precedence(op_t token);
 
 	/* ensure proper input syntax */
 	static void throw_if_invalid(const std::string &expr);

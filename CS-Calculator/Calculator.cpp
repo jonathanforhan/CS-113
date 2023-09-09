@@ -14,7 +14,7 @@ Calculator::Calculator(unsigned opts)
     	_tokens({})
 {}
 
-bool Calculator::evaluate(const std::string& expr, int64_t& result)
+_CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& result)
 {
 	try {
 		_tokens = Parser::try_parse(expr);
@@ -29,48 +29,48 @@ bool Calculator::evaluate(const std::string& expr, int64_t& result)
 	{
 		for (const auto &t : _tokens)
 		{
-			t > Token::MOD_BIT
-				? std::cout << Parser::to_char(t) << ' '
-				: std::cout << t << ' ';
+			t.numeric
+				? std::cout << Parser::to_char(t.op) << ' '
+				: std::cout << t.val << ' ';
 		}
 
 		std::cout << '\n';
 	}
 
-	std::vector<int64_t> stack;
+	std::vector<double> stack;
 
-	for (const auto token : _tokens)
+	for (const auto &token : _tokens)
 	{
-		if (!(token > Token::MOD_BIT))
+		if (token.numeric)
 		{
-			stack.push_back(token);
+			stack.push_back(token.val);
 		}
 		else
 		{
 			// the two top numbers on our stack
-			int64_t b = stack.back();
+			double b = stack.back();
 			stack.pop_back();
-			int64_t a = stack.back();
+			double a = stack.back();
 			stack.pop_back();
 
-			switch (token)
+			switch (token.op)
 			{
-				case Token::Exp:
-					stack.push_back(static_cast<int64_t>(pow(a, b)));
+				case Op::eExp:
+					stack.push_back(pow(a, b));
 					break;
-				case Token::Mod:
-					stack.push_back(a % b);
+				case Op::eMod:
+					stack.push_back(fmod(a, b));
 					break;
-				case Token::Mul:
+				case Op::eMul:
 					stack.push_back(a * b);
 					break;
-				case Token::Div:
+				case Op::eDiv:
 					stack.push_back(a / b);
 					break;
-				case Token::Add:
+				case Op::eAdd:
 					stack.push_back(a + b);
 					break;
-				case Token::Sub:
+				case Op::eSub:
 					stack.push_back(a - b);
 					break;
 			}

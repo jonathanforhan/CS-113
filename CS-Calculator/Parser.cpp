@@ -3,7 +3,7 @@
 
 namespace calc {
 
-std::vector<token_t> Parser::try_parse(const std::string& expr)
+std::vector<Token> Parser::try_parse(const std::string& expr)
 {
 	try {
 		throw_if_invalid(expr);
@@ -11,11 +11,12 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 		throw e; // explicitly rethrow
 	}
 
-	std::vector<token_t> res_stack;	// result stack
-	std::vector<token_t> op_stack;	// operation stack
+	std::vector<Token> res_stack;	// result stack
+	std::vector<op_t> op_stack;		// operation stack
 	bool prev_numeric   = false;	// if last val was a number
 	bool prev_op		= false;	// if last val was an operation, used for negative determination
 	bool negative		= false;	// tracks negative vs minus sign
+	int floating_point	= 0;		// tracks floating points placement
 	int last_precedence = 0;		// order of operations
 
 	for (const char c : expr)
@@ -27,15 +28,44 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 		{
 			if (prev_numeric)
 			{
-				res_stack.back() = res_stack.back() * 10 + static_cast<int64_t>(c - '0');
+				assert(res_stack.back().numeric);
+				if (!floating_point)
+				{
+					res_stack.back().val = res_stack.back().val * 10 + static_cast<double>(c - '0');
+				}
+				else
+				{
+					res_stack.back().val = res_stack.back().val + static_cast<double>(c - '0') / pow(10, floating_point);
+					floating_point++;
+				}
 			}
 			else
 			{
-				auto n = static_cast<int64_t>(c - '0');
-				res_stack.push_back(negative ? (-1 * n) : n);
+				res_stack.emplace_back(static_cast<double>(c - '0'));
 			}
+
+			if (negative && res_stack.back().val != 0)
+			{
+				res_stack.back().val *= -1;
+				negative = false;
+			}
+
 			prev_numeric = true;
-			prev_op = negative = false;
+			prev_op = false;
+
+			continue;
+		}
+		else if (c == '.')
+		{
+			if (floating_point)
+				throw std::runtime_error("Two decimal points in one number");
+
+			if (!prev_numeric)
+				res_stack.emplace_back(0.0);
+
+			floating_point++;
+			prev_numeric = true;
+			prev_op = false;
 			continue;
 		}
 		else if (c == '-' && (prev_op || res_stack.empty()))
@@ -45,41 +75,40 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 			continue;
 		}
 
+		if (floating_point == 1) /* must be digit if fp == 1 */
+			throw std::runtime_error("Unterminated decimal");
+
+		floating_point = 0;
 		prev_numeric = prev_op = negative = false;
 
-		token_t pair;
-
-		switch (token_t token = to_token(c))
+		switch (op_t token = to_op(c))
 		{
-		case Token::LBracket:
-		case Token::LParen:
-		case Token::LBrace:
+			op_t pair;
+		case Op::eLBracket:
+		case Op::eLParen:
+		case Op::eLBrace:
 			op_stack.push_back(token);
 			break;
-		case Token::RBracket:
-		case Token::RParen:
-		case Token::RBrace:
-			pair = Token::get_pair(token);
+		case Op::eRBracket:
+		case Op::eRParen:
+		case Op::eRBrace:
+			pair = Op::get_pair(token);
 			while (!op_stack.empty() && op_stack.back() != pair)
 			{
-				res_stack.push_back(op_stack.back());
+				res_stack.emplace_back(op_stack.back());
 				op_stack.pop_back();
 			}
 			op_stack.pop_back();
 			break;
-		case Token::Exp:
-			// ^ is evaluated right-to-left so no precedence checking
-			op_stack.push_back(token);
-			prev_op = true;
-			break;
-		case Token::Mod:
-		case Token::Mul:
-		case Token::Div:
-		case Token::Add:
-		case Token::Sub:
+		case Op::eExp:
+		case Op::eMod:
+		case Op::eMul:
+		case Op::eDiv:
+		case Op::eAdd:
+		case Op::eSub:
 			if (!op_stack.empty() && get_precedence(token) <= last_precedence)
 			{
-				res_stack.push_back(op_stack.back());
+				res_stack.emplace_back(op_stack.back());
 				op_stack.pop_back();
 			}
 			op_stack.push_back(token);
@@ -94,109 +123,90 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 
 	for (auto op = op_stack.rbegin(); op != op_stack.rend(); ++op)
 	{
-		res_stack.push_back(*op);
+		res_stack.emplace_back(*op);
 	}
-
-	// if Debug build run this code, this should never happen and is only for debugging
-#ifndef NDEBUG
-	for (const auto t : res_stack)
-	{
-		switch (t)
-		{
-		case Token::LBracket:
-		case Token::LParen:
-		case Token::LBrace:
-		case Token::RBracket:
-		case Token::RParen:
-		case Token::RBrace:
-			throw std::runtime_error("Post-parse check failed");
-		default:
-			break;
-		}
-	}
-#endif
 
 	return res_stack;
 }
 
-token_t Parser::to_token(char c)
+op_t Parser::to_op(char c)
 {
 	switch (c)
 	{
 	case '[':
-		return Token::LBracket;
+		return Op::eLBracket;
 	case '(':
-		return Token::LParen;
+		return Op::eLParen;
 	case '{':
-		return Token::LBrace;
+		return Op::eLBrace;
 	case ']':
-		return Token::RBracket;
+		return Op::eRBracket;
 	case ')':
-		return Token::RParen;
+		return Op::eRParen;
 	case '}':
-		return Token::RBrace;
+		return Op::eRBrace;
 	case '^':
-		return Token::Exp;
+		return Op::eExp;
 	case '%':
-		return Token::Mod;
+		return Op::eMod;
 	case '*':
-		return Token::Mul;
+		return Op::eMul;
 	case '/':
-		return Token::Div;
+		return Op::eDiv;
 	case '+':
-		return Token::Add;
+		return Op::eAdd;
 	case '-':
-		return Token::Sub;
+		return Op::eSub;
 	default:
 		throw std::runtime_error("Invalid Character as input: " + c);
 	}
 }
 
-char Parser::to_char(token_t t)
+char Parser::to_char(op_t t)
 {
 	switch (t)
 	{
-	case Token::LBracket:
+	case Op::eLBracket:
 		return '[';
-	case Token::LParen:
+	case Op::eLParen:
 		return '(';
-	case Token::LBrace:
+	case Op::eLBrace:
 		return '{';
-	case Token::RBracket:
+	case Op::eRBracket:
 		return ']';
-	case Token::RParen:
+	case Op::eRParen:
 		return ')';
-	case Token::RBrace:
+	case Op::eRBrace:
 		return '}';
-	case Token::Exp:
+	case Op::eExp:
 		return '^';
-	case Token::Mod:
+	case Op::eMod:
 		return '%';
-	case Token::Mul:
+	case Op::eMul:
 		return '*';
-	case Token::Div:
+	case Op::eDiv:
 		return '/';
-	case Token::Add:
+	case Op::eAdd:
 		return '+';
-	case Token::Sub:
+	case Op::eSub:
 		return '-';
 	default:
 		throw std::runtime_error("Invalid Token");
 	}
 }
 
-int Parser::get_precedence(token_t token)
+int Parser::get_precedence(op_t token)
 {
 	switch (token)
 	{
-	case Token::Exp:
+	case Op::eExp:
 		return 3;
-	case Token::Mod:
-	case Token::Mul:
-	case Token::Div:
+	case Op::eMod:
+	case Op::eMul:
+	case Op::eDiv:
 		return 2;
-	case Token::Add:
-	case Token::Sub:
+	case Op::eAdd:
+	case Op::eSub:
 		return 1;
 	default:
 		return 0;
@@ -211,34 +221,34 @@ void Parser::throw_if_invalid(const std::string& expr)
 	int bracket = 0, paren = 0, brace = 0;
 	for (const char c : expr)
 	{
-		if (c != ' ' && /* c != '.' && */ !isdigit(c))
+		if (c != ' ' && c != '.' && !isdigit(c))
 		{
-			token_t token;
+			op_t token;
 
 			try {
-				token = to_token(c);
+				token = to_op(c);
 			} catch (const std::exception& e) {
 				throw e; // explicitly rethrow
 			}
 
 			switch(token)
 			{
-				case Token::LBracket:
+				case Op::eLBracket:
 					bracket++;
 					break;
-				case Token::LParen:
+				case Op::eLParen:
 					paren++;
 					break;
-				case Token::LBrace:
+				case Op::eLBrace:
 					brace++;
 					break;
-				case Token::RBracket:
+				case Op::eRBracket:
 					bracket--;
 					break;
-				case Token::RParen:
+				case Op::eRParen:
 					paren--;
 					break;
-				case Token::RBrace:
+				case Op::eRBrace:
 					brace--;
 					break;
 				default:

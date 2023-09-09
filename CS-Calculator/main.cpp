@@ -1,8 +1,6 @@
 #include <iostream>
-#include "Calculator.hpp"
 #include <cassert>
-
-using namespace calc;
+#include "Calculator.hpp"
 
 void test();
 
@@ -11,57 +9,71 @@ int main()
 #ifndef NDEBUG
 	test();
 #endif
-
-	std::cout << "Enter Expression for Calculator\n";
-
-	std::string expr;
-	std::getline(std::cin, expr);
+	const std::vector<std::string> examples = {
+		"(1 / 10) ^ 2 + 5",
+		"[(1+4) / 10] ^2 ^2",
+		"100 % 48 + 5 / .5"
+	};
 	
-	Calculator calculator;
+	calc::Calculator calculator;
+	std::string expr;
+	double result;
+	unsigned i = 0;
 
-	int64_t result;
-	while (!(calculator.evaluate(expr, result)))
+	std::cout << "Enter an Expression for the Calculator\n" << std::endl;
+
+	while (1)
 	{
-		std::cout << "Invalid User Input. Try Again" << std::endl;
+		std::cout << "> ";
 		std::getline(std::cin, expr);
+
+		if (expr == "exit")
+		{
+			exit(EXIT_SUCCESS);
+		}
+		else if (expr == "help")
+		{
+			std::cout << "\nEnter an equation, for example: " + examples[i] + "\n" << std::endl;
+			i = ++i % examples.size();
+			continue;
+		}
+
+		if (!(calculator.evaluate(expr, result)))
+		{
+			std::cout << "Invalid User Input. Try Again\n" << std::endl;
+			continue;
+		}
+
+		std::cout << "------------" << std::endl;
+		std::cout << "  " << result << "\n" << std::endl;
 	}
 
-	std::cout << result << std::endl;
 }
 
 void test()
 {
-	Calculator c;
-	int64_t r;
-	c.evaluate("2 ^ 8", r);
-	assert(r == 256);
+	calc::Calculator c;
+	double r;
+	bool b;
 
-	c.evaluate("10 % 3", r);
-	assert(r == 1);
+	b = c.evaluate("2.5 * 2", r);
+	assert(b && r == 5);
 
-	c.evaluate("3 * 3", r);
-	assert(r == 9);
+	b = c.evaluate("2+ { 10^2} - (24 / 6)", r);
+	assert(b && r == 98);
 
-	c.evaluate("9 / 3", r);
-	assert(r == 3);
+	b = c.evaluate("2^(5%3)/[1+4-3]*3", r);
+	assert(b && r == 6);
 
-	c.evaluate("9 + 3", r);
-	assert(r == 12);
+	b = c.evaluate("2 * -2", r);
+	assert(b && r == -4);
 
-	c.evaluate("9 - 3", r);
-	assert(r == 6);
+	b = c.evaluate("-2^(5%3)/[1+4-3]*-3", r);
+	assert(b && r == -6);
 
-	c.evaluate("2+ { 10^2} - (24 / 6)", r);
-	assert(r == 98);
+	b = c.evaluate("5 / 2", r);
+	assert(b && r == 2.5);
 
-	c.evaluate("2^(5%3)/[1+4-3]*3", r);
-	assert(r == 6);
-
-	assert(c.evaluate("(1+3))", r) == false);
-
-	c.evaluate("2 * -2", r);
-	assert(r == -4);
-
-	c.evaluate("-2^(5%3)/[1+4-3]*-3", r);
-	assert(r == -6);
+	b = c.evaluate("(1+3))", r);
+	assert(!b);
 }
