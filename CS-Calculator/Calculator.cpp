@@ -4,7 +4,7 @@
 
 namespace calc {
 
-Calculator::Calculator(CalculatorOpts opts)
+Calculator::Calculator(CalculatorOpts::Bits opts)
 	  : _opts(opts),
     	_tokens({})
 {}
@@ -14,14 +14,13 @@ bool Calculator::evaluate(const std::string& expr, int64_t& result)
 	try {
 		_tokens = Parser::try_parse(expr);
 	} catch (const std::exception& e) {
-#ifndef NDEBUG
-		// error logging
-		std::cerr << e.what() << std::endl;
-#endif
+		if (_opts & CalculatorOpts::eDebug)
+			std::cerr << e.what() << std::endl;
+
 		return false;
 	}
 
-	if (_opts == CalculatorOpts::ePrintRPN)
+	if (_opts & CalculatorOpts::ePrintRPN)
 	{
 		for (const auto &t : _tokens)
 		{

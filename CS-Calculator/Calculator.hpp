@@ -5,21 +5,25 @@
 
 namespace calc {
 
-enum class CalculatorOpts
+struct CalculatorOpts
 {
-	eNil,
-	ePrintRPN,	// Print Reverse Polish Notation during parsing
+	enum Bits
+	{
+		eNil		= 0,
+		ePrintRPN 	= 1,	// Print Reverse Polish Notation during parsing
+		eDebug 	    = 2,	// Debug Printing
+	};
 };
 
 class Calculator
 {
 public:
-	explicit Calculator(CalculatorOpts opts);
+	explicit Calculator(CalculatorOpts::Bits opts);
 
 	bool evaluate(const std::string& expr, int64_t& result);
 
 private:
-	CalculatorOpts _opts;
+	CalculatorOpts::Bits _opts;
 	std::vector<token_t> _tokens;
 };
 

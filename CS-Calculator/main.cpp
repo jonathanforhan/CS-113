@@ -53,4 +53,9 @@ void test()
 
 	c.evaluate("2+ { 10^2} - (24 / 6)", r);
 	assert(r == 98);
+
+	c.evaluate("2^(5%3)/[1+4-3]*3", r);
+	assert(r == 6);
+
+	assert(c.evaluate("(1+3))", r) == false);
 }

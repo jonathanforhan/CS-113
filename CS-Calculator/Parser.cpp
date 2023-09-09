@@ -8,7 +8,7 @@ std::vector<token_t> Parser::try_parse(const std::string& expr)
 	try {
 		throw_if_invalid(expr);
 	} catch (const std::exception& e) {
-		throw e; // expliclily rethrow
+		throw e; // explicitly rethrow
 	}
 
 	std::vector<token_t> res_stack;	// result stack
@@ -194,7 +194,7 @@ void Parser::throw_if_invalid(const std::string& expr)
 	if (expr.empty())
 		throw std::runtime_error("Empty string");
 
-	unsigned bracket = 0, paren = 0, brace = 0;
+	int bracket = 0, paren = 0, brace = 0;
 	for (const char c : expr)
 	{
 		if (c != ' ' && !isdigit(c))
@@ -204,7 +204,7 @@ void Parser::throw_if_invalid(const std::string& expr)
 			try {
 				token = to_token(c);
 			} catch (const std::exception& e) {
-				throw e; // expliclily rethrow
+				throw e; // explicitly rethrow
 			}
 
 			switch(token)
