@@ -29,7 +29,7 @@ int main()
 
 		if (expr == "exit")
 		{
-			exit(EXIT_SUCCESS);
+			break;
 		}
 		else if (expr == "help")
 		{
