@@ -30,8 +30,8 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 		for (const auto &t : _tokens)
 		{
 			t.numeric
-				? std::cout << Parser::to_char(t.op) << ' '
-				: std::cout << t.val << ' ';
+				? std::cout << t.val << ' '
+				: std::cout << Parser::to_char(t.op) << ' ';
 		}
 
 		std::cout << '\n';
