@@ -59,6 +59,9 @@ void test()
 	b = c.evaluate("2.5 * 2", r);
 	assert(b && r == 5);
 
+	b = c.evaluate("-.5 ^ 3 * 8", r);
+	assert(b && r == -1);
+
 	b = c.evaluate("2+ { 10^2} - (24 / 6)", r);
 	assert(b && r == 98);
 
