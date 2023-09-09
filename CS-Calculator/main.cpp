@@ -20,7 +20,7 @@ int main()
 	double result;
 	unsigned i = 0;
 
-	std::cout << "Enter an Expression for the Calculator\n" << std::endl;
+	std::cout << "Enter an Expression for the Calculator\nType 'help' for help\nType 'exit' to quit\n" << std::endl;
 
 	while (1)
 	{
