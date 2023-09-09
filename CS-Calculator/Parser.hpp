@@ -14,9 +14,6 @@ public:
 	/* https://en.wikipedia.org/wiki/Shunting_yard_algorithm */
 	static std::vector<Token> try_parse(const std::string &expr);
 
-	static op_t to_op(char c);
-	static char to_char(op_t t);
-
 private:
 	/* Logic for order of operations PEMDAS
 	 * | ^ | 3 |
@@ -26,7 +23,7 @@ private:
 	 * | + | 1 |
 	 * | - | 1 |
 	 */
-	static int get_precedence(op_t token);
+	static int get_precedence(op_t op);
 
 	/* ensure proper input syntax */
 	static void throw_if_invalid(const std::string &expr);

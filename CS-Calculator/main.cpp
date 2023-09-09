@@ -56,6 +56,9 @@ void test()
 	double r;
 	bool b;
 
+	b = c.evaluate("2.34 / (-.234)", r);
+	assert(b && r == -10);
+
 	b = c.evaluate("2.5 * 2", r);
 	assert(b && r == 5);
 
@@ -78,5 +81,11 @@ void test()
 	assert(b && r == 2.5);
 
 	b = c.evaluate("(1+3))", r);
+	assert(!b);
+
+	b = c.evaluate("-..34 + 1", r);
+	assert(!b);
+
+	b = c.evaluate("5 * 0.3-", r);
 	assert(!b);
 }

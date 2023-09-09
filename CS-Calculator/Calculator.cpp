@@ -31,7 +31,7 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 		{
 			t.numeric
 				? std::cout << t.val << ' '
-				: std::cout << Parser::to_char(t.op) << ' ';
+				: std::cout << Op::to_char(t.op) << ' ';
 		}
 
 		std::cout << '\n';
@@ -81,6 +81,9 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 		return false;
 
 	result = stack.front();
+
+	constexpr double precision = 1000000.0;
+	result = std::round(result * precision) / precision;
 
 	return true;
 }
