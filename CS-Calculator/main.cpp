@@ -22,9 +22,8 @@ int main()
 	int64_t result;
 	while (!(calculator.evaluate(expr, result)))
 	{
-		std::cin.clear();
-		std::cin.ignore();
-		std::cout << "Invalid User Input. Try Again";
+		std::cout << "Invalid User Input. Try Again" << std::endl;
+		std::getline(std::cin, expr);
 	}
 
 	std::cout << result << std::endl;
