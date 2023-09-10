@@ -93,4 +93,7 @@ void test()
 
 	b = c.evaluate(") 1 + 2 (", r);
 	assert(!b);
+
+	b = c.evaluate("1 / 0", r);
+	assert(!b);
 }

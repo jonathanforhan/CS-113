@@ -66,6 +66,8 @@ _CALC_NODISCARD bool Calculator::evaluate(const std::string& expr, double& resul
 					stack.push_back(a * b);
 					break;
 				case Op::eDiv:
+					if (b == 0)
+						return false;
 					stack.push_back(a / b);
 					break;
 				case Op::eAdd:
